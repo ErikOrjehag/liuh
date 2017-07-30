@@ -8,15 +8,15 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "liuh_camera");
   ros::NodeHandle nh;
   image_transport::ImageTransport it(nh);
-  image_transport::Publisher pub = it.advertise("/liuh_camera/video", 1);
+  image_transport::Publisher pub = it.advertise("video", 1);
 
-  liuh::CameraDriver camera;
+  liuh_camera::CameraDriver camera(liuh_camera::CAMERA_TOP, 30);
 
   bool holding = false;
 
   while (ros::ok()) {
     camera.release();
-    liuh::SharedImgPtr image = camera.capture();
+    liuh_camera::SharedImgPtr image = camera.capture();
     pub.publish(image);
   }
 }

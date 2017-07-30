@@ -8,16 +8,18 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <string>
 
 #include <ros/console.h>
 #include <sensor_msgs/image_encodings.h>
 
-namespace liuh {
-  CameraDriver::CameraDriver() {
+namespace liuh_camera {
+  CameraDriver::CameraDriver(CameraDevice device, unsigned fps) {
     captured_ = false;
+    device_ = device;
     initOpenVideoDevice();
     initSetVideoFormat();
-    setFramesPerSecond(5);
+    setFramesPerSecond(fps);
     initRequestAndMapBuffers();
     initQueueAllBuffers();
     initDefaultControlSettings();
@@ -71,12 +73,12 @@ namespace liuh {
     //ROS_INFO("timestamp: %llu", timestamp);
 
     sensor_msgs::Image* msg = new sensor_msgs::Image();
-    msg->header.frame_id = "CameraTop_optical_frame";
-    //msg->header.stamp.sec = ;
-    //msg->header.stamp.nsec = ;
+    msg->header.frame_id = device_ == CAMERA_TOP ? "CameraTop_optical_frame" : "CameraBottom_optical_frame";
+    msg->header.stamp.sec = buf_->timestamp.tv_sec;
+    msg->header.stamp.nsec = buf_->timestamp.tv_usec * 1000;
     msg->width = WIDTH_;
     msg->height = HEIGHT_;
-    msg->encoding = sensor_msgs::image_encodings::YUV422;
+    msg->encoding = sensor_msgs::image_encodings::YUV422; // TODO: This is not the actual YUV format
     msg->is_bigendian = 0;
     msg->step = STEP_;
     msg->data.resize(SIZE_);
@@ -111,8 +113,19 @@ namespace liuh {
 
   void CameraDriver::initOpenVideoDevice()
   {
-    const char* device = "/dev/video0";
-    fd_ = open(device, O_RDWR | O_NONBLOCK);
+    std::string device_str;
+    switch (device_) {
+      case CAMERA_TOP:
+        device_str = "/dev/video0";
+        break;
+      case CAMERA_BOTTOM:
+        device_str = "/dev/video1";
+        break;
+      default:
+        ROS_FATAL_STREAM("Camera device " << device_ << " not supported!");
+        assert(false);
+    }
+    fd_ = open(device_str.c_str(), O_RDWR | O_NONBLOCK);
     assert(fd_ != -1);
   }
 

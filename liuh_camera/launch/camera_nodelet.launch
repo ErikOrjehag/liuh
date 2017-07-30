@@ -1,4 +1,17 @@
 <launch>
-  <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="screen"/>
-  <node pkg="nodelet" type="nodelet" name="CameraNodelet" args="load liuh/CameraNodelet standalone_nodelet" output="screen"/>
+
+    <node pkg="nodelet"
+          type="nodelet"
+          args="manager"
+          name="camera_nodelet_manager"
+          output="screen" />
+
+    <node pkg="nodelet"
+          type="nodelet"
+          args="load liuh_camera/CameraNodelet camera_nodelet_manager"
+          name="camera_top"
+          output="screen">
+          <param name="device" value="top">
+          <param name="fps" value="30">
+    </node>
 </launch>

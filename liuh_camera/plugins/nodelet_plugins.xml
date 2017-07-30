@@ -1,0 +1,14 @@
+<library path="lib/libliuh_camera_nodelet">
+	<class name="liuh_camera/CameraNodelet" type="liuh_camera::CameraNodelet"
+		base_class_type="nodelet::Nodelet">
+		<description>
+			Camera driver nodlet.
+		</description>
+	</class>
+	<class name="liuh_camera/DummyNodelet" type="liuh_camera::DummyNodelet"
+		base_class_type="nodelet::Nodelet">
+		<description>
+			Dummy nodelet that subscribes to camera nodelet to test image transfer performance.
+		</description>
+	</class>
+</library>

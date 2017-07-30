@@ -5,15 +5,20 @@
 #include <sensor_msgs/Image.h>
 #include <boost/shared_ptr.hpp>
 
-namespace liuh
+namespace liuh_camera
 {
   typedef boost::shared_ptr< const sensor_msgs::Image > SharedImgPtr;
+
+  enum CameraDevice {
+    CAMERA_TOP, CAMERA_BOTTOM
+  };
 
   class CameraDriver
   {
   private:
     int fd_;
     bool captured_;
+    CameraDevice device_;
     struct v4l2_buffer* buf_;
     static const unsigned FRAME_BUFFER_COUNT_ = 3;
     void* mem_[FRAME_BUFFER_COUNT_];
@@ -35,7 +40,7 @@ namespace liuh
     static const unsigned STEP_ = WIDTH_ * LAYERS_;
     static const unsigned SIZE_ = WIDTH_ * HEIGHT_ * LAYERS_;
 
-    CameraDriver();
+    CameraDriver(CameraDevice device, unsigned fps);
     ~CameraDriver();
     SharedImgPtr capture();
     void release();

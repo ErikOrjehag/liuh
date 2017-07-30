@@ -125,17 +125,26 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
 )
 
-## Declare a C++ library
+####################
+## CAMERA NODELET ##
+####################
+
 add_library(${PROJECT_NAME}_nodelet
-   src/camera_nodelet.cpp
-   src/${PROJECT_NAME}/camera_driver.cpp
+  src/dummy_nodelet.cpp
+  src/camera_nodelet.cpp
+  src/${PROJECT_NAME}/camera_driver.cpp
 )
+
+add_dependencies(${PROJECT_NAME}_nodelet ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(${PROJECT_NAME}_nodelet
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
 )
 
+if(catkin_EXPORTED_LIBRARIES)
+  add_dependencies(${PROJECT_NAME}_nodelet ${catkin_EXPORTED_LIBRARIES})
+endif()
 
 
 ## Add cmake target dependencies of the library
@@ -223,10 +232,15 @@ install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}_nodelet
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  )
+)
+
+install(DIRECTORY plugins
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 install(FILES
   launch/camera_node.launch
   launch/camera_nodelet.launch
+  launch/dummy_test.launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
 )
