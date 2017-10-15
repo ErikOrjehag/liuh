@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <poll.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -22,7 +21,6 @@ namespace liuh_camera {
     setFramesPerSecond(fps);
     initRequestAndMapBuffers();
     initQueueAllBuffers();
-    initDefaultControlSettings();
     startCapturing();
   }
 
@@ -41,8 +39,47 @@ namespace liuh_camera {
 
   SharedImgPtr CameraDriver::capture() {
     struct pollfd pollfd = { fd_, POLLIN | POLLPRI, 0 };
-    int timeout = 1000;
-    int polled = poll(&pollfd, 1, timeout);
+    pollFds(&pollfd, 1);
+
+    if (!(pollfd.revents & POLLIN)) {
+      ROS_ERROR("Unexpected camera poll results: %d", pollfd.revents);
+      assert(false);
+    }
+
+    return deque();
+  }
+
+
+  SharedImgPtr CameraDriver::capture(CameraDriver& camera_top, CameraDriver& camera_bottom, CameraDevice& which) {
+    CameraDriver* cam[2] = { &camera_top, &camera_bottom };
+
+    struct pollfd pollfds[2] = {
+      { cam[0]->fd_, POLLIN | POLLPRI, 0 },
+      { cam[1]->fd_, POLLIN | POLLPRI, 0 },
+    };
+    
+    pollFds(pollfds, 2);
+
+    for (int i = 0; i < 2; i++) {
+      if (pollfds[i].revents & POLLIN) {
+
+        if (i == 0) which = CAMERA_TOP;
+        else which = CAMERA_BOTTOM;
+
+        return cam[i]->deque();
+
+      } else if (pollfds[i].revents) {
+        ROS_ERROR("Unexpected camera poll results: %d", pollfds[i].revents);
+        assert(false);
+      }
+    }
+
+    ROS_ERROR("No poll revents!");
+    assert(false);
+  }
+
+  void CameraDriver::pollFds(struct pollfd* pollfds, int size) {
+    int polled = poll(pollfds, size, TIMEOUT_);
 
     if (polled < 0) {
       ROS_ERROR("Cannot poll camera image. Reason: %s", strerror(errno));
@@ -50,13 +87,19 @@ namespace liuh_camera {
     }
     else if (polled == 0)
     {
-      ROS_ERROR("Poll camera image timed out after %d ms", timeout);
+      ROS_ERROR("Poll camera image timed out after %d ms", TIMEOUT_);
       assert(false);
     }
+  }
 
-    if (!(pollfd.revents & POLLIN)) {
-      ROS_ERROR("Unexpected camera poll results: %d", pollfd.revents);
-      assert(false);
+  SharedImgPtr CameraDriver::deque() {
+    if (captured_) {
+      captured_ = false;
+      int qbuf_res = ioctl(fd_, VIDIOC_QBUF, buf_);
+      if (qbuf_res == -1) {
+        ROS_ERROR("Could not queue camera buffer. Reason: %s", strerror(errno));
+        assert(false);
+      }
     }
 
     int dqbuf_res = ioctl(fd_, VIDIOC_DQBUF, buf_);
@@ -85,17 +128,6 @@ namespace liuh_camera {
     memcpy(msg->data.data(), image, SIZE_);
 
     return SharedImgPtr(msg);
-  }
-
-  void CameraDriver::release() {
-    if (captured_) {
-      captured_ = false;
-      int qbuf_res = ioctl(fd_, VIDIOC_QBUF, buf_);
-      if (qbuf_res == -1) {
-        ROS_ERROR("Could not queue camera buffer. Reason: %s", strerror(errno));
-        assert(false);
-      }
-    }
   }
 
   void CameraDriver::setFramesPerSecond(unsigned fps)
@@ -182,11 +214,6 @@ namespace liuh_camera {
       int qbuf_res = ioctl(fd_, VIDIOC_QBUF, buf_);
       assert(qbuf_res != -1);
     }
-  }
-
-  void CameraDriver::initDefaultControlSettings()
-  {
-
   }
 
   void CameraDriver::startCapturing()

@@ -9,9 +9,9 @@
     <node pkg="nodelet"
           type="nodelet"
           args="load liuh_camera/CameraNodelet camera_nodelet_manager"
-          name="camera_top"
+          name="liuh_camera"
           output="screen">
-          <param name="device" value="top">
-          <param name="fps" value="30">
+          <param name="fps_top" value="0" />
+          <param name="fps_bottom" value="10" />
     </node>
 </launch>

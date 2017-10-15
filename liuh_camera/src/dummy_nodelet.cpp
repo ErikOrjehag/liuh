@@ -29,7 +29,7 @@ namespace liuh_camera {
   void DummyNodelet::onInit() {
     ros::NodeHandle nh = getPrivateNodeHandle();
     image_transport::ImageTransport it(nh);
-    sub = it.subscribe("/liuh_camera/video", 1, &DummyNodelet::imageCallback, this);
+    sub = it.subscribe("/liuh_camera/bottom", 1, &DummyNodelet::imageCallback, this);
     last_image_time_ = ros::Time::now();
   }
 

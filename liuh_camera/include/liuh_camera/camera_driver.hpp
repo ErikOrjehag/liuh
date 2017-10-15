@@ -4,6 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include <sensor_msgs/Image.h>
 #include <boost/shared_ptr.hpp>
+#include <poll.h>
 
 namespace liuh_camera
 {
@@ -23,6 +24,7 @@ namespace liuh_camera
     static const unsigned FRAME_BUFFER_COUNT_ = 3;
     void* mem_[FRAME_BUFFER_COUNT_];
     int mem_length_[FRAME_BUFFER_COUNT_];
+    static const unsigned TIMEOUT_ = 1000;
 
     void setFramesPerSecond(unsigned fps);
 
@@ -30,8 +32,10 @@ namespace liuh_camera
     void initSetVideoFormat();
     void initRequestAndMapBuffers();
     void initQueueAllBuffers();
-    void initDefaultControlSettings();
     void startCapturing();
+
+    static void pollFds(struct pollfd* pollfds, int size);
+    SharedImgPtr deque();
 
   public:
     static const unsigned WIDTH_ = 1280;
@@ -42,7 +46,8 @@ namespace liuh_camera
 
     CameraDriver(CameraDevice device, unsigned fps);
     ~CameraDriver();
+
     SharedImgPtr capture();
-    void release();
+    static SharedImgPtr capture(CameraDriver& camera_top, CameraDriver& camera_bottom, CameraDevice& which);
   };
 }
