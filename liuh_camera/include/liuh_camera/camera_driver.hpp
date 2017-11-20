@@ -18,13 +18,12 @@ namespace liuh_camera
   {
   private:
     int fd_;
-    bool captured_;
     CameraDevice device_;
     struct v4l2_buffer* buf_;
     static const unsigned FRAME_BUFFER_COUNT_ = 3;
     void* mem_[FRAME_BUFFER_COUNT_];
     int mem_length_[FRAME_BUFFER_COUNT_];
-    static const unsigned TIMEOUT_ = 1000;
+    static const unsigned TIMEOUT_ = 3000;
 
     void setFramesPerSecond(unsigned fps);
 

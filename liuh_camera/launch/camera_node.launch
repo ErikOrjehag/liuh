@@ -5,6 +5,6 @@
     type="liuh_camera_node"
     output="screen" >
     <param name="fps_top" value="0" />
-    <param name="fps_bottom" value="10" />
+    <param name="fps_bottom" value="30" />
   </node>
 </launch>

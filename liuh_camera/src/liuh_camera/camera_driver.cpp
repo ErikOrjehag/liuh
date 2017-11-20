@@ -14,7 +14,6 @@
 
 namespace liuh_camera {
   CameraDriver::CameraDriver(CameraDevice device, unsigned fps) {
-    captured_ = false;
     device_ = device;
     initOpenVideoDevice();
     initSetVideoFormat();
@@ -57,15 +56,13 @@ namespace liuh_camera {
       { cam[0]->fd_, POLLIN | POLLPRI, 0 },
       { cam[1]->fd_, POLLIN | POLLPRI, 0 },
     };
-    
+
     pollFds(pollfds, 2);
 
     for (int i = 0; i < 2; i++) {
       if (pollfds[i].revents & POLLIN) {
 
-        if (i == 0) which = CAMERA_TOP;
-        else which = CAMERA_BOTTOM;
-
+        which = (i == 0) ? CAMERA_TOP : CAMERA_BOTTOM;
         return cam[i]->deque();
 
       } else if (pollfds[i].revents) {
@@ -93,22 +90,11 @@ namespace liuh_camera {
   }
 
   SharedImgPtr CameraDriver::deque() {
-    if (captured_) {
-      captured_ = false;
-      int qbuf_res = ioctl(fd_, VIDIOC_QBUF, buf_);
-      if (qbuf_res == -1) {
-        ROS_ERROR("Could not queue camera buffer. Reason: %s", strerror(errno));
-        assert(false);
-      }
-    }
-
     int dqbuf_res = ioctl(fd_, VIDIOC_DQBUF, buf_);
     if (dqbuf_res == -1) {
       ROS_ERROR("Could not dequeue camera buffer. Reason: %s", strerror(errno));
       assert(false);
     }
-
-    captured_ = true;
 
     unsigned long long timestamp = static_cast<unsigned long long>(buf_->timestamp.tv_sec) * 1000000ll + buf_->timestamp.tv_usec;
     unsigned char* image = static_cast<unsigned char*>(mem_[buf_->index]);
@@ -126,6 +112,12 @@ namespace liuh_camera {
     msg->step = STEP_;
     msg->data.resize(SIZE_);
     memcpy(msg->data.data(), image, SIZE_);
+
+    int qbuf_res = ioctl(fd_, VIDIOC_QBUF, buf_);
+    if (qbuf_res == -1) {
+      ROS_ERROR("Could not queue camera buffer. Reason: %s", strerror(errno));
+      assert(false);
+    }
 
     return SharedImgPtr(msg);
   }

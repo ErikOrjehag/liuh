@@ -11,8 +11,8 @@
           args="load liuh_camera/CameraNodelet camera_nodelet_manager"
           name="liuh_camera"
           output="screen">
-          <param name="fps_top" value="0" />
-          <param name="fps_bottom" value="10" />
+          <param name="fps_top" value="15" />
+          <param name="fps_bottom" value="15" />
     </node>
 
     <node pkg="nodelet"
